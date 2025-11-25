@@ -45,7 +45,7 @@ classDiagram
 This layer handles the specific configuration needed to run the application for the Eagle dataset.
 
 ```mermaid
-ssequenceDiagram
+sequenceDiagram
     participant E as EntryPoint (run_eagle_pipeline.py)
     participant L as PointCloudLoader
     participant P as PointCloudPipeline
