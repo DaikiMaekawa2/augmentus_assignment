@@ -226,38 +226,6 @@ class PointCloudPipeline:
         self.cluster_min_points = cluster_min_points
         self.cluster_min_size = cluster_min_size
 
-    def save_render(self, pcd: o3d.geometry.PointCloud, filename: str):
-        """
-        Renders the point cloud to an image file, ensuring proper camera setup for headless environments.
-
-        Parameters
-        ----------
-        pcd : open3d.geometry.PointCloud
-            The point cloud to be rendered.
-        filename : str
-            The name of the output image file (e.g., 'output.png').
-        """
-
-        """Helper to render and save the point cloud as an image using the Visualizer."""
-
-        vis = o3d.visualization.Visualizer()
-        vis.create_window(visible=False, width=1280, height=960)
-        vis.add_geometry(pcd)
-
-        ctr = vis.get_view_control()
-        ctr.set_lookat(pcd.get_center())
-        vis.update_geometry(pcd)
-        vis.poll_events()
-        vis.update_renderer()
-
-        ctr.set_front([0.5, -0.5, -1.0])
-        ctr.set_up([0, 0, 1])
-        ctr.set_zoom(0.5)
-        vis.capture_screen_image(filename)
-        vis.destroy_window()
-
-        print(f"Render saved as {filename}")
-
     def run_pipeline(self, pcd: o3d.geometry.PointCloud):
         """
         Executes the full point cloud processing sequentially.
