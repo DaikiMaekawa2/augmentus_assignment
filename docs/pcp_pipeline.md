@@ -1,10 +1,10 @@
-# UML Class Diagram for Point Cloud Pipeline
+# UML Class Diagram for Core Processing Pipeline
 
 * `PointCloudLoader`: Responsible solely for retrieving the dataset.
 * `PointCloudProcessor`: Handles generic preprocessing (like downsampling).
 * `NormalEstimator`: Calculates surface geometry properties.
 * `ClusterExtractor`: Executes the segmentation algorithm.
-* `PointCloudPipeline`: The primary orchestrator of the application. It manages the sequence of operations (Load -> Process -> Normals -> Cluster -> Render) and holds the configuration parameters.
+* `PointCloudPipeline`: The primary orchestrator of the processing flow.
 
 ```mermaid
 classDiagram
@@ -27,19 +27,39 @@ classDiagram
     }
 
     class PointCloudPipeline {
-        -loader: PointCloudLoader
         -processor: PointCloudProcessor
         -normal_estimator: NormalEstimator
         -cluster_extractor: ClusterExtractor
         +__init__(voxel_size, eps, min_points)
         +save_render(pcd, filename)
-        +run_pipeline()
+        +run_pipeline(pcd)
     }
 
-    PointCloudLoader <|-- PointCloudPipeline : aggregates
     PointCloudProcessor <|-- PointCloudPipeline : aggregates
     NormalEstimator <|-- PointCloudPipeline : aggregates
     ClusterExtractor <|-- PointCloudPipeline : aggregates
+```
+
+# Application Entry Point
+
+This layer handles the specific configuration needed to run the application for the Eagle dataset.
+
+```mermaid
+ssequenceDiagram
+    participant E as EntryPoint (run_eagle_pipeline.py)
+    participant L as PointCloudLoader
+    participant P as PointCloudPipeline
+
+    Note over E: Data Acquisition & Transformation
+    E->L: __init__()
+    E->E: transformed_pcd = load_and_transform_eagle_data()
+
+    Note over E: Initialize Generic Pipeline
+    E->P: __init__(config params)
+
+    E->P: run_pipeline(transformed_pcd)
+    Note over P: Executes Downsample -> Normals -> Cluster
+    P-->E: Pipeline Complete
 ```
 
 # UML Class Diagram for Pytest Architecture
