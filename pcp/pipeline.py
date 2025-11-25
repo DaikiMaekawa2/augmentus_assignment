@@ -5,6 +5,7 @@ This module contains the core classes required for loading, preprocessing,
 analyzing, and visualizing 3D point cloud data using the Open3D library.
 """
 
+import numpy as np
 import open3d as o3d
 
 
@@ -102,6 +103,93 @@ class NormalEstimator:
         return pcd
 
 
+class ClusterExtractor:
+    """
+    Segments the point cloud into individual geometric components.
+    """
+
+    def euclidean_cluster(
+        self,
+        pcd: o3d.geometry.PointCloud,
+        eps: float = 0.05,
+        min_points: int = 10,
+        min_size: int = 500,
+    ):
+        """
+        Performs Euclidean clustering (DBSCAN) on the point cloud.
+
+        The resulting clusters are colored randomly, and noise points are colored black.
+
+        Parameters
+        ----------
+        pcd : open3d.geometry.PointCloud
+            The input point cloud.
+        eps : float, optional
+            The distance parameter for DBSCAN (maximum distance between two points
+            for one to be considered as in the neighborhood of the other) (default is 0.05).
+        min_points : int, optional
+            The number of points required to form a dense region (default is 10).
+        min_size : int, optional
+            The minimum size a cluster must be to be retained and colored
+            (used to filter noise/debris clusters) (default is 500).
+
+        Returns
+        -------
+        tuple
+            (
+            :obj:`open3d.geometry.PointCloud`: The clustered point cloud with colors assigned,
+            :obj:`list`: List of individual clustered point cloud objects,
+            :obj:`int`: The total count of valid clusters found (excluding noise)
+            )
+        """
+
+        """Performs Euclidean clustering on the point cloud."""
+        print(f"Performing clustering (eps={eps}, min_points={min_points})...")
+
+        with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Error):
+            labels = np.array(
+                pcd.cluster_dbscan(eps=eps, min_points=min_points, print_progress=True)
+            )
+
+        max_label = labels.max()
+        print(f"Point cloud yielded {max_label + 1} total raw clusters.")
+
+        point_colors = np.zeros((len(pcd.points), 3))
+
+        # Generate random colors for cluster labels (index 0 up to max_label)
+        # We need max_label + 1 slots for the clusters themselves
+        cluster_colors = np.random.rand(max_label + 1, 3)
+
+        valid_cluster_count = 0
+        cluster_pcds = []
+
+        for i in range(max_label + 1):
+            indices = np.where(labels == i)[0]
+            cluster_size = len(indices)
+
+            if cluster_size >= min_size:
+                # 1. This is a valid, large cluster. Assign its color to the point_colors array.
+                color = cluster_colors[i]
+                point_colors[indices] = color
+
+                # 2. Create the individual cluster PCD for the return list
+                cluster = pcd.select_by_index(indices)
+                cluster.paint_uniform_color(color)
+                cluster_pcds.append(cluster)
+
+                valid_cluster_count += 1
+            else:
+                # 3. This cluster is too small (debris/noise). Points remain colored black (default).
+                pass
+
+        pcd.colors = o3d.utility.Vector3dVector(point_colors)
+        print(
+            f"Post-filtering resulted in {valid_cluster_count} valid clusters (>= {min_size} points)."
+        )
+
+        return pcd, cluster_pcds, valid_cluster_count
+
+
 class PointCloudPipeline:
     """
     Orchestrates the entire point cloud processing workflow
@@ -112,6 +200,7 @@ class PointCloudPipeline:
         voxel_size: float = 0.01,
         cluster_eps: float = 0.02,
         cluster_min_points: int = 10,
+        cluster_min_size: int = 500,
     ):
         """
         Initializes the pipeline with specific parameters and core components.
@@ -124,14 +213,18 @@ class PointCloudPipeline:
             Epsilon parameter for DBSCAN clustering (default is 0.02).
         cluster_min_points : int, optional
             Minimum points parameter for DBSCAN clustering (default is 10).
+        cluster_min_size : int, optional
+            Minimum size a cluster must be to be retrained and colored (default is 500).
         """
 
         self.processor = PointCloudProcessor()
         self.normal_estimator = NormalEstimator()
+        self.cluster_extractor = ClusterExtractor()
 
         self.voxel_size = voxel_size
         self.cluster_eps = cluster_eps
         self.cluster_min_points = cluster_min_points
+        self.cluster_min_size = cluster_min_size
 
     def save_render(self, pcd: o3d.geometry.PointCloud, filename: str):
         """
@@ -197,3 +290,13 @@ class PointCloudPipeline:
         o3d.visualization.draw_geometries(
             [pcd_normals], point_show_normal=True, window_name="Normals"
         )
+
+        # 3. Clustering
+        pcd_clustered, clusters, count = self.cluster_extractor.euclidean_cluster(
+            pcd_normals,
+            self.cluster_eps,
+            self.cluster_min_points,
+            self.cluster_min_size,
+        )
+        self.save_render(pcd_clustered, "render_clustered.png")
+        o3d.visualization.draw_geometries([pcd_clustered], window_name="Clustered")

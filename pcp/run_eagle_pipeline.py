@@ -37,7 +37,9 @@ def load_and_transform_eagle_data() -> o3d.geometry.PointCloud:
 if __name__ == "__main__":
     transformed_pcd = load_and_transform_eagle_data()
 
-    pipeline = PointCloudPipeline()
+    pipeline = PointCloudPipeline(
+        voxel_size=0.01, cluster_eps=0.045, cluster_min_points=35, cluster_min_size=500
+    )
     pipeline.run_pipeline(transformed_pcd)
 
     print("\nrun_eagle_pipeline.py execution complete.")
