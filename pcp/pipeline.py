@@ -5,7 +5,6 @@ This module contains the core classes required for loading, preprocessing,
 analyzing, and visualizing 3D point cloud data using the Open3D library.
 """
 
-import numpy as np
 import open3d as o3d
 
 
@@ -14,7 +13,7 @@ class PointCloudLoader:
     Handles the loading of point cloud data from the Open3D dataset utilities.
     """
 
-    def load_eagle_cloud(self):
+    def load_eagle_cloud(self) -> o3d.geometry.PointCloud:
         """
         Loads the specific Eagle point cloud dataset provided by Open3D.
 
@@ -39,7 +38,9 @@ class PointCloudProcessor:
     Performs preprocessing steps on the point cloud data.
     """
 
-    def downsample(self, pcd, voxel_size=0.01):
+    def downsample(
+        self, pcd: o3d.geometry.PointCloud, voxel_size: float = 0.01
+    ) -> o3d.geometry.PointCloud:
         """
         Reduces the number of points using Voxel Grid Down-sampling.
 
@@ -68,7 +69,9 @@ class NormalEstimator:
     Calculates and assigns surface normals for the point cloud.
     """
 
-    def estimate_normals(self, pcd, radius=0.05, max_nn=30):
+    def estimate_normals(
+        self, pcd: o3d.geometry.PointCloud, radius: float = 0.05, max_nn: int = 30
+    ) -> o3d.geometry.PointCloud:
         """
         Estimates and orients surface normals using a KDTree search.
 
@@ -101,10 +104,15 @@ class NormalEstimator:
 
 class PointCloudPipeline:
     """
-    Orchestrates the entire point cloud processing workflow, from loading to visualization.
+    Orchestrates the entire point cloud processing workflow
     """
 
-    def __init__(self, voxel_size=0.01, cluster_eps=0.02, cluster_min_points=10):
+    def __init__(
+        self,
+        voxel_size: float = 0.01,
+        cluster_eps: float = 0.02,
+        cluster_min_points: int = 10,
+    ):
         """
         Initializes the pipeline with specific parameters and core components.
 
@@ -118,7 +126,6 @@ class PointCloudPipeline:
             Minimum points parameter for DBSCAN clustering (default is 10).
         """
 
-        self.loader = PointCloudLoader()
         self.processor = PointCloudProcessor()
         self.normal_estimator = NormalEstimator()
 
@@ -126,7 +133,7 @@ class PointCloudPipeline:
         self.cluster_eps = cluster_eps
         self.cluster_min_points = cluster_min_points
 
-    def save_render(self, pcd, filename):
+    def save_render(self, pcd: o3d.geometry.PointCloud, filename: str):
         """
         Renders the point cloud to an image file, ensuring proper camera setup for headless environments.
 
@@ -158,35 +165,35 @@ class PointCloudPipeline:
 
         print(f"Render saved as {filename}")
 
-    def run_pipeline(self):
+    def run_pipeline(self, pcd: o3d.geometry.PointCloud):
         """
-        Executes the full point cloud processing sequence: Load -> Downsample -> Normals -> Cluster -> Render.
+        Executes the full point cloud processing sequentially.
+
+        The method orchestrates the core stages of the pipeline:
+        Downsampling, Surface Normal Estimation, Euclidean Clustering
+
+        Parameters
+        ----------
+        pcd : open3d.geometry.PointCloud
+            The point cloud object to be processed
         """
 
-        # 1. Load Data
+        # 1. Down-sampling
 
-        pcd_original = self.loader.load_eagle_cloud()
-        R = pcd_original.get_rotation_matrix_from_xyz((-np.pi, -np.pi/4, 0))
-        pcd_original.rotate(R, center=pcd_original.get_center())
-        o3d.visualization.draw_geometries([pcd_original], window_name="Original")
-
-        # 2. Down-sampling
-
-        pcd_downsampled = self.processor.downsample(pcd_original, self.voxel_size)
+        pcd_downsampled = self.processor.downsample(pcd, self.voxel_size)
         self.save_render(pcd_downsampled, "render_downsampled.png")
         print("render_downsampled.png saved.")
-        o3d.visualization.draw_geometries([pcd_downsampled], point_show_normal=True, window_name="Downsampled")
+        o3d.visualization.draw_geometries([pcd_downsampled], window_name="Downsampled")
 
-        # 3. Normal Estimation
+        # 2. Normal Estimation
 
         # Ensures the search sphere is large enough to consistently capture the immediate neighborhood
         search_radius = self.voxel_size * 3.0
-        pcd_normals = self.normal_estimator.estimate_normals(pcd_downsampled, radius=search_radius)
+        pcd_normals = self.normal_estimator.estimate_normals(
+            pcd_downsampled, radius=search_radius
+        )
         self.save_render(pcd_normals, "render_normals.png")
         print("render_normals.png saved.")
-        o3d.visualization.draw_geometries([pcd_normals], point_show_normal=True, window_name="Normals")
-
-
-if __name__ == "__main__":
-    pipeline = PointCloudPipeline()
-    pipeline.run_pipeline()
+        o3d.visualization.draw_geometries(
+            [pcd_normals], point_show_normal=True, window_name="Normals"
+        )
