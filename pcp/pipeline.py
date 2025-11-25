@@ -127,10 +127,16 @@ class PointCloudPipeline:
 
         pcd_original = self.loader.load_eagle_cloud()
 
+        # Interactive View
+        o3d.visualization.draw_geometries([pcd_original], window_name="Original")
+
         # Down-sampling
         pcd_downsampled = self.processor.downsample(pcd_original, self.voxel_size)
         self.save_render(pcd_downsampled, "render_downsampled.png")
         print("render_downsampled.png saved.")
+
+        # Interactive View
+        o3d.visualization.draw_geometries([pcd_downsampled], window_name="Downsampled")
 
 
 if __name__ == "__main__":
