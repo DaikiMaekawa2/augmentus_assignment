@@ -24,14 +24,14 @@ def load_and_transform_eagle_data() -> o3d.geometry.PointCloud:
     """
 
     loader = PointCloudLoader()
-    pcd = loader.load_eagle_cloud()
+    pcd_original = loader.load_eagle_cloud()
 
-    # Apply specific rotational transformation for visualization alignment.
-    R = pcd.get_rotation_matrix_from_xyz((-np.pi, -np.pi / 4, 0))
-    pcd.rotate(R, center=pcd.get_center())
+    # Apply specific transformation for visualization alignment.
+    R = pcd_original.get_rotation_matrix_from_xyz((-np.pi, -np.pi / 4, 0))
+    pcd_transformed = pcd_original.rotate(R, center=pcd_original.get_center())
 
-    print("Initial rotation transformation applied to the Eagle Point Cloud.")
-    return pcd
+    print("Initial transformation applied to the Eagle Point Cloud.")
+    return pcd_transformed
 
 
 if __name__ == "__main__":
