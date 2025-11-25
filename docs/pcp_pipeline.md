@@ -40,7 +40,7 @@ classDiagram
     ClusterExtractor <|-- PointCloudPipeline : aggregates
 ```
 
-# Application Entry Point
+# UML Sequence Diagram for Application Entry Point
 
 This layer handles the specific configuration needed to run the application for the Eagle dataset.
 
