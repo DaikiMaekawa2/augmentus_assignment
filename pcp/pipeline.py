@@ -5,6 +5,7 @@ This module contains the core classes required for loading, preprocessing,
 analyzing, and visualizing 3D point cloud data using the Open3D library.
 """
 
+import numpy as np
 import open3d as o3d
 
 
@@ -94,8 +95,7 @@ class NormalEstimator:
                 radius=radius, max_nn=max_nn
             )
         )
-        # Orient normals consistently towards a viewpoint, removing ambiguity
-        pcd.orient_normals_to_align_with_direction(orientation_reference=([0, 0, 1]))
+
         return pcd
 
 
@@ -164,19 +164,26 @@ class PointCloudPipeline:
         """
 
         # 1. Load Data
-        pcd_original = self.loader.load_eagle_cloud()
 
+        pcd_original = self.loader.load_eagle_cloud()
+        R = pcd_original.get_rotation_matrix_from_xyz((-np.pi, -np.pi/4, 0))
+        pcd_original.rotate(R, center=pcd_original.get_center())
         o3d.visualization.draw_geometries([pcd_original], window_name="Original")
 
         # 2. Down-sampling
+
         pcd_downsampled = self.processor.downsample(pcd_original, self.voxel_size)
         self.save_render(pcd_downsampled, "render_downsampled.png")
         print("render_downsampled.png saved.")
-
-        o3d.visualization.draw_geometries([pcd_downsampled], window_name="Downsampled")
+        o3d.visualization.draw_geometries([pcd_downsampled], point_show_normal=True, window_name="Downsampled")
 
         # 3. Normal Estimation
-        pcd_normals = self.normal_estimator.estimate_normals(pcd_downsampled)
+
+        # Ensures the search sphere is large enough to consistently capture the immediate neighborhood
+        search_radius = self.voxel_size * 3.0
+        pcd_normals = self.normal_estimator.estimate_normals(pcd_downsampled, radius=search_radius)
+        self.save_render(pcd_normals, "render_normals.png")
+        print("render_normals.png saved.")
         o3d.visualization.draw_geometries([pcd_normals], point_show_normal=True, window_name="Normals")
 
 
