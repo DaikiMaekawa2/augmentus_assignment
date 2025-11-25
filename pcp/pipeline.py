@@ -62,6 +62,43 @@ class PointCloudProcessor:
         return downsampled_pcd
 
 
+class NormalEstimator:
+    """
+    Calculates and assigns surface normals for the point cloud.
+    """
+
+    def estimate_normals(self, pcd, radius=0.05, max_nn=30):
+        """
+        Estimates and orients surface normals using a KDTree search.
+
+        Parameters
+        ----------
+        pcd : open3d.geometry.PointCloud
+            The input point cloud (must be downsampled for best results).
+        radius : float, optional
+            The search radius for finding neighbors (default is 0.05).
+        max_nn : int, optional
+            The maximum number of neighbors to consider (default is 30).
+
+        Returns
+        -------
+        open3d.geometry.PointCloud
+            The point cloud with normals assigned and oriented.
+        """
+
+        """Estimates and orients surface normals."""
+        print("Estimating surface normals...")
+        # Search parameters for KD-tree based normal estimation
+        pcd.estimate_normals(
+            search_param=o3d.geometry.KDTreeSearchParamHybrid(
+                radius=radius, max_nn=max_nn
+            )
+        )
+        # Orient normals consistently towards a viewpoint, removing ambiguity
+        pcd.orient_normals_to_align_with_direction(orientation_reference=([0, 0, 1]))
+        return pcd
+
+
 class PointCloudPipeline:
     """
     Orchestrates the entire point cloud processing workflow, from loading to visualization.
@@ -83,6 +120,7 @@ class PointCloudPipeline:
 
         self.loader = PointCloudLoader()
         self.processor = PointCloudProcessor()
+        self.normal_estimator = NormalEstimator()
 
         self.voxel_size = voxel_size
         self.cluster_eps = cluster_eps
@@ -125,18 +163,21 @@ class PointCloudPipeline:
         Executes the full point cloud processing sequence: Load -> Downsample -> Normals -> Cluster -> Render.
         """
 
+        # 1. Load Data
         pcd_original = self.loader.load_eagle_cloud()
 
-        # Interactive View
         o3d.visualization.draw_geometries([pcd_original], window_name="Original")
 
-        # Down-sampling
+        # 2. Down-sampling
         pcd_downsampled = self.processor.downsample(pcd_original, self.voxel_size)
         self.save_render(pcd_downsampled, "render_downsampled.png")
         print("render_downsampled.png saved.")
 
-        # Interactive View
         o3d.visualization.draw_geometries([pcd_downsampled], window_name="Downsampled")
+
+        # 3. Normal Estimation
+        pcd_normals = self.normal_estimator.estimate_normals(pcd_downsampled)
+        o3d.visualization.draw_geometries([pcd_normals], point_show_normal=True, window_name="Normals")
 
 
 if __name__ == "__main__":
