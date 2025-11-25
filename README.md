@@ -18,7 +18,7 @@ $ source venv_open3d/bin/activate
 2. Install Dependencies:
 
 ```bash
-(venv_open3d) pip install open3d numpy pytest pytest-flake8 sphinx sphinx-rtd-theme sphinx-mermaid
+(venv_open3d) pip install open3d numpy pytest pytest-flake8 black isort sphinx sphinx-rtd-theme sphinx-mermaid
 ```
 
 ## Usage (Running the Pipeline)
@@ -26,7 +26,10 @@ $ source venv_open3d/bin/activate
 The core workflow is executed via the pipeline.py script. The script automatically runs the pipeline and saves the required render images to the project root directory.
 
 ## Run the main pipeline script from the project root
+
+```bash
 (venv_open3d) python pcp/pipeline.py
+```
 
 ### Output Files Generated:
 
@@ -34,9 +37,20 @@ The core workflow is executed via the pipeline.py script. The script automatical
 * render_normals.png
 * render_clustered.png
 
-## Testing
+## Testing and Code Quality
 
 The project utilizes Pytest for a comprehensive testing suite that includes functionality checks, regression testing, and linting.
+
+### Code Formatting
+
+The codebase adheres to strict style standards enforced by Black and isort.
+
+To format the entire project, run:
+
+```bash
+(venv_open3d) black .
+(venv_open3d) isort .
+```
 
 ### Running Tests
 
