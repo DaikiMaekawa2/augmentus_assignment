@@ -21,17 +21,17 @@ $ source venv_open3d/bin/activate
 (venv_open3d) pip install open3d numpy pytest pytest-flake8 black isort sphinx sphinx-rtd-theme sphinx-mermaid
 ```
 
-## Usage (Running the Pipeline)
+## Usage
 
-The core workflow is executed via the pipeline.py script. The script automatically runs the pipeline and saves the required render images to the project root directory.
+The core workflow is executed via the run_eagle_pipeline.py script.
 
-## Run the main pipeline script from the project root
+### Run the main pipeline script from the project root
 
 ```bash
-(venv_open3d) python pcp/pipeline.py
+(venv_open3d) python pcp/run_eagle_pipeline.py
 ```
 
-### Output Files Generated:
+#### Output Files Generated:
 
 * render_downsampled.png
 * render_normals.png
