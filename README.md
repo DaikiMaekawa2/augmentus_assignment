@@ -31,6 +31,26 @@ The core workflow is executed via the run_eagle_pipeline.py script.
 (venv_open3d) python -m pcp.run_eagle_pipeline
 ```
 
+The pipeline uses the Open3D interactive viewer to display results sequentially. User interaction is required to advance the processing stages:
+
+View and Save: For each stage (Downsampled, Normals, Clustered), a new window will open. You can rotate the model using the mouse. To save the view as an image file, press the P key on your keyboard while the window is active.
+
+Advance Stage: To move to the next processing step, you must manually close the current visualization window.
+
+#### Visualized Stages (Sequential):
+
+1. Downsampled Point Cloud
+
+![](./downsampled.png)
+
+2. Point Cloud with Estimated Normals
+
+![](./normals.png)
+
+3. Clustered Point Cloud
+
+![](./clustered.png)
+
 ## Testing and Code Quality
 
 The project utilizes Pytest for a comprehensive testing suite that includes functionality checks, regression testing, and linting.
@@ -53,6 +73,18 @@ Run the following command from the project root to execute the entire test suite
 ```bash
 (venv_open3d) pytest
 ```
+
+The test suite performs the following actions:
+
+1. Downsampling Reduction: Verifies that Voxel Down-sampling successfully reduces the point count while remaining non-zero.
+
+2. Normal Creation: Asserts that the NormalEstimator creates a normals array with the correct (N x 3) dimensionality.
+
+3. Clustering Segmentation: Confirms that the resulting clusters count is greater than one, achieving geometric separation.
+
+4. Clustering Regression: Asserts that the size of the largest segmented cluster remains stable against a known "Golden Standard" value (within 1% tolerance).
+
+5. Empty Input (Processor/Normal Estimation/Clustering): Verifies that passing an empty point cloud to them does not crash and returns zero points/clusters.
 
 The test suite performs three actions:
 
