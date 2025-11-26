@@ -7,6 +7,7 @@ pure Pytest style with fixtures for class-level setup.
 """
 
 import copy
+import numpy as np
 import open3d as o3d
 import pytest
 
@@ -61,9 +62,14 @@ class TestPointCloudProcessing:
     Test methods receive the loaded point cloud data via the 'loaded_raw_pcd' and 'empty_pcd' fixture.
     """
 
+    VOXEL_SIZE: float = 0.01
+    CLUSTER_EPS: float = 0.02
+    CLUSTER_MIN_POINTS: int = 10
+    CLUSTER_MIN_SIZE: int = 500
+
     # Define the shared constants for regression testing
-    GOLDEN_LARGEST_CLUSTER_SIZE = 251450
-    TOLERANCE_PERCENTAGE = 0.01
+    GOLDEN_LARGEST_CLUSTER_SIZE: float = 46071
+    TOLERANCE_PERCENTAGE: float = 0.01
 
     def test_down_sample_empty_input(self, empty_pcd):
         """
@@ -72,7 +78,9 @@ class TestPointCloudProcessing:
         """
         processor = PointCloudProcessor()
 
-        pcd_downsampled = processor.downsample(empty_pcd, voxel_size=0.01)
+        pcd_downsampled = processor.downsample(
+            empty_pcd, voxel_size=TestPointCloudProcessing.VOXEL_SIZE
+        )
 
         # Assert the result is still empty and valid
         assert isinstance(pcd_downsampled, o3d.geometry.PointCloud)
@@ -89,7 +97,9 @@ class TestPointCloudProcessing:
         # Note: Clustering might fail if the object is missing normals,
         # so we ensure it doesn't crash on an empty set of points.
         pcd_clustered, clusters_list, count = extractor.euclidean_cluster(
-            empty_pcd, eps=0.040, min_points=35
+            empty_pcd,
+            eps=TestPointCloudProcessing.CLUSTER_EPS,
+            min_points=TestPointCloudProcessing.CLUSTER_MIN_POINTS,
         )
 
         # Assert the result is empty and count is zero
@@ -97,6 +107,19 @@ class TestPointCloudProcessing:
         assert len(pcd_clustered.points) == 0
         assert count == 0
         assert len(clusters_list) == 0
+
+    def test_normal_estimator_empty_input(self, empty_pcd):
+        """
+        Validates that normal estimation handles an empty point cloud gracefully.
+        """
+        normal_estimator = NormalEstimator()
+
+        pcd_with_normals = normal_estimator.estimate_normals(empty_pcd)
+
+        # Assert the result is still empty and valid
+        assert isinstance(pcd_with_normals, o3d.geometry.PointCloud)
+        assert len(pcd_with_normals.points) == 0
+        assert not pcd_with_normals.has_normals()
 
     def test_voxel_down_sampling_reduces_count(self, loaded_raw_pcd):
         """
@@ -109,7 +132,9 @@ class TestPointCloudProcessing:
         processor = PointCloudProcessor()
         initial_count = len(loaded_pcd.points)
 
-        pcd_downsampled = processor.downsample(loaded_pcd, voxel_size=0.01)
+        pcd_downsampled = processor.downsample(
+            loaded_pcd, voxel_size=TestPointCloudProcessing.VOXEL_SIZE
+        )
         downsampled_count = len(pcd_downsampled.points)
 
         # Pure Pytest assertion style (simple 'assert' statements)
@@ -118,6 +143,36 @@ class TestPointCloudProcessing:
         ), "Downsampling did not reduce the point count."
         assert downsampled_count > 0, "Downsampling resulted in an empty point cloud."
 
+    def test_normal_creation_and_dimensionality(self, loaded_raw_pcd):
+        """
+        Validates that normal estimation successfully creates a normals array
+        with the correct shape (N points x 3 dimensions).
+        """
+        loaded_pcd = copy.deepcopy(loaded_raw_pcd)
+
+        processor = PointCloudProcessor()
+        normal_estimator = NormalEstimator()
+
+        # Downsample first, as normals are always calculated on the processed cloud
+        pcd_downsampled = processor.downsample(
+            loaded_pcd, voxel_size=TestPointCloudProcessing.VOXEL_SIZE
+        )
+        initial_point_count = len(pcd_downsampled.points)
+
+        pcd_with_normals = normal_estimator.estimate_normals(pcd_downsampled)
+
+        # Assert normals attribute is present
+        assert (
+            pcd_with_normals.has_normals()
+        ), "Normal estimation failed to create normals."
+
+        # Assert correct shape (N x 3)
+        normals_array = np.asarray(pcd_with_normals.normals)
+        assert normals_array.shape == (
+            initial_point_count,
+            3,
+        ), f"Normals array has incorrect shape: {normals_array.shape}. Expected ({initial_point_count}, 3)."
+
     def test_clustering_produces_multiple_segments(self, loaded_raw_pcd):
         """
         Verifies that clustering successfully segments the scene into multiple components (> 1 cluster).
@@ -125,19 +180,20 @@ class TestPointCloudProcessing:
         loaded_pcd = copy.deepcopy(loaded_raw_pcd)
 
         processor = PointCloudProcessor()
-        pcd_downsampled = processor.downsample(loaded_pcd, voxel_size=0.01)
+        pcd_downsampled = processor.downsample(
+            loaded_pcd, voxel_size=TestPointCloudProcessing.VOXEL_SIZE
+        )
         extractor = ClusterExtractor()
 
         # Normals estimation step is included for robust clustering execution
         normal_estimator = NormalEstimator()
         pcd_normals = normal_estimator.estimate_normals(pcd_downsampled)
 
-        eps = 0.040
-        min_points = 35
-        min_size = 500
-
         pcd_clustered, clusters, count = extractor.euclidean_cluster(
-            pcd_normals, eps=eps, min_points=min_points, min_size=min_size
+            pcd_normals,
+            eps=TestPointCloudProcessing.CLUSTER_EPS,
+            min_points=TestPointCloudProcessing.CLUSTER_MIN_POINTS,
+            min_size=TestPointCloudProcessing.CLUSTER_MIN_SIZE,
         )
 
         assert count > 1, f"Clustering only produced {count} or fewer segments."
@@ -153,15 +209,16 @@ class TestPointCloudProcessing:
         normal_estimator = NormalEstimator()
         extractor = ClusterExtractor()
 
-        pcd_downsampled = processor.downsample(loaded_pcd, voxel_size=0.01)
+        pcd_downsampled = processor.downsample(
+            loaded_pcd, voxel_size=TestPointCloudProcessing.VOXEL_SIZE
+        )
         pcd_normals = normal_estimator.estimate_normals(pcd_downsampled)
 
-        eps = 0.040
-        min_points = 35
-        min_size = 500
-
         pcd_clustered, clusters_list, count = extractor.euclidean_cluster(
-            pcd_normals, eps=eps, min_points=min_points, min_size=min_size
+            pcd_normals,
+            eps=TestPointCloudProcessing.CLUSTER_EPS,
+            min_points=TestPointCloudProcessing.CLUSTER_MIN_POINTS,
+            min_size=TestPointCloudProcessing.CLUSTER_MIN_SIZE,
         )
 
         # Find the size of the largest valid cluster:
