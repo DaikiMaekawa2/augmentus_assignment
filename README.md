@@ -47,9 +47,9 @@ The core workflow is executed via the run_eagle_pipeline.py script.
 
 The pipeline uses the Open3D interactive viewer to display results sequentially. User interaction is required to advance the processing stages:
 
-View and Save: For each stage (Downsampled, Normals, Clustered), a new window will open. You can rotate the model using the mouse. To save the view as an image file, press the P key on your keyboard while the window is active.
+**View and Save**: For each stage (Downsampled, Normals, Clustered), a new window will open. You can rotate the model using the mouse. To save the view as an image file, press the P key on your keyboard while the window is active.
 
-Advance Stage: To move to the next processing step, you must manually close the current visualization window.
+**Advance Stage**: To move to the next processing step, you must manually close the current visualization window.
 
 #### Visualized Stages (Sequential):
 
