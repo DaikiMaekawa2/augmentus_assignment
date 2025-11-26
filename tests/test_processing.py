@@ -25,12 +25,17 @@ from pcp.pipeline import (
 
 
 @pytest.fixture(scope="class")
-def loaded_raw_pcd():
+def loaded_raw_pcd() -> o3d.geometry.PointCloud:
     """
     Class-scoped fixture to load the Eagle Point Cloud once per test class.
 
     This ensures the expensive data loading operation is only performed once
     and the loaded raw data (pcd) is available to all test methods.
+
+    Returns
+    -------
+    open3d.geometry.PointCloud
+        The loaded raw point cloud object for testing.
     """
     print("\n[Pytest Fixture] Loading Eagle Point Cloud...")
     pcd = PointCloudLoader().load_eagle_cloud()
@@ -43,8 +48,15 @@ def loaded_raw_pcd():
 
 
 @pytest.fixture(scope="function")
-def empty_pcd():
-    """Returns a valid Open3D PointCloud object with zero points."""
+def empty_pcd() -> o3d.geometry.PointCloud:
+    """
+    This fixture is used for testing edge-case stability.
+
+    Returns
+    -------
+    open3d.geometry.PointCloud
+        The valid Open3D PointCloud object with zero points.
+    """
     pcd = o3d.geometry.PointCloud()
     assert len(pcd.points) == 0
     return pcd
@@ -59,7 +71,7 @@ class TestPointCloudProcessing:
     """
     Tests the core functionality of the point cloud pipeline components.
 
-    Test methods receive the loaded point cloud data via the 'loaded_raw_pcd' and 'empty_pcd' fixture.
+    Test methods receive the point cloud data via the 'loaded_raw_pcd' and 'empty_pcd' fixtures.
     """
 
     VOXEL_SIZE: float = 0.01
@@ -71,10 +83,15 @@ class TestPointCloudProcessing:
     GOLDEN_LARGEST_CLUSTER_SIZE: float = 46071
     TOLERANCE_PERCENTAGE: float = 0.01
 
-    def test_down_sample_empty_input(self, empty_pcd):
+    def test_down_sample_empty_input(self, empty_pcd: o3d.geometry.PointCloud) -> None:
         """
         Validates that downsampling an empty point cloud returns an empty point cloud
         and does not crash.
+
+        Parameters
+        ----------
+        empty_pcd : open3d.geometry.PointCloud
+            Fixture supplying an empty PointCloud object.
         """
         processor = PointCloudProcessor()
 
@@ -87,15 +104,18 @@ class TestPointCloudProcessing:
         assert len(pcd_downsampled.points) == 0
         assert len(pcd_downsampled.normals) == 0  # Should not create normals if empty
 
-    def test_clustering_empty_input(self, empty_pcd):
+    def test_clustering_empty_input(self, empty_pcd: o3d.geometry.PointCloud) -> None:
         """
         Validates that clustering an empty point cloud returns zero clusters
         and does not crash.
+
+        Parameters
+        ----------
+        empty_pcd : open3d.geometry.PointCloud
+            Fixture supplying an empty PointCloud object.
         """
         extractor = ClusterExtractor()
 
-        # Note: Clustering might fail if the object is missing normals,
-        # so we ensure it doesn't crash on an empty set of points.
         pcd_clustered, clusters_list, count = extractor.euclidean_cluster(
             empty_pcd,
             eps=TestPointCloudProcessing.CLUSTER_EPS,
@@ -108,9 +128,16 @@ class TestPointCloudProcessing:
         assert count == 0
         assert len(clusters_list) == 0
 
-    def test_normal_estimator_empty_input(self, empty_pcd):
+    def test_normal_estimator_empty_input(
+        self, empty_pcd: o3d.geometry.PointCloud
+    ) -> None:
         """
         Validates that normal estimation handles an empty point cloud gracefully.
+
+        Parameters
+        ----------
+        empty_pcd : open3d.geometry.PointCloud
+            Fixture supplying an empty PointCloud object.
         """
         normal_estimator = NormalEstimator()
 
@@ -121,11 +148,18 @@ class TestPointCloudProcessing:
         assert len(pcd_with_normals.points) == 0
         assert not pcd_with_normals.has_normals()
 
-    def test_voxel_down_sampling_reduces_count(self, loaded_raw_pcd):
+    def test_voxel_down_sampling_reduces_count(
+        self, loaded_raw_pcd: o3d.geometry.PointCloud
+    ) -> None:
         """
         Validates the Voxel Down-sampling process.
 
         Asserts that the point count is strictly reduced while remaining non-zero.
+
+        Parameters
+        ----------
+        loaded_raw_pcd : open3d.geometry.PointCloud
+            Fixture spplying a loaded raw point cloud.
         """
         loaded_pcd = copy.deepcopy(loaded_raw_pcd)
 
@@ -143,10 +177,17 @@ class TestPointCloudProcessing:
         ), "Downsampling did not reduce the point count."
         assert downsampled_count > 0, "Downsampling resulted in an empty point cloud."
 
-    def test_normal_creation_and_dimensionality(self, loaded_raw_pcd):
+    def test_normal_creation_and_dimensionality(
+        self, loaded_raw_pcd: o3d.geometry.PointCloud
+    ) -> None:
         """
         Validates that normal estimation successfully creates a normals array
         with the correct shape (N points x 3 dimensions).
+
+        Parameters
+        ----------
+        loaded_raw_pcd : open3d.geometry.PointCloud
+            Fixture spplying a loaded raw point cloud.
         """
         loaded_pcd = copy.deepcopy(loaded_raw_pcd)
 
@@ -173,9 +214,16 @@ class TestPointCloudProcessing:
             3,
         ), f"Normals array has incorrect shape: {normals_array.shape}. Expected ({initial_point_count}, 3)."
 
-    def test_clustering_produces_multiple_segments(self, loaded_raw_pcd):
+    def test_clustering_produces_multiple_segments(
+        self, loaded_raw_pcd: o3d.geometry.PointCloud
+    ) -> None:
         """
         Verifies that clustering successfully segments the scene into multiple components (> 1 cluster).
+
+        Parameters
+        ----------
+        loaded_raw_pcd : open3d.geometry.PointCloud
+            Fixture spplying a loaded raw point cloud.
         """
         loaded_pcd = copy.deepcopy(loaded_raw_pcd)
 
@@ -198,10 +246,17 @@ class TestPointCloudProcessing:
 
         assert count > 1, f"Clustering only produced {count} or fewer segments."
 
-    def test_clustering_regression(self, loaded_raw_pcd):
+    def test_clustering_regression(
+        self, loaded_raw_pcd: o3d.geometry.PointCloud
+    ) -> None:
         """
         Regression test: Asserts that the size of the largest cluster remains stable
         (within the defined tolerance) against a known Golden Standard.
+
+        Parameters
+        ----------
+        loaded_raw_pcd : open3d.geometry.PointCloud
+            Fixture spplying a loaded raw point cloud.
         """
         loaded_pcd = copy.deepcopy(loaded_raw_pcd)
 
