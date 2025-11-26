@@ -76,23 +76,17 @@ Run the following command from the project root to execute the entire test suite
 
 The test suite performs the following actions:
 
-1. Downsampling Reduction: Verifies that Voxel Down-sampling successfully reduces the point count while remaining non-zero.
-
-2. Normal Creation: Asserts that the NormalEstimator creates a normals array with the correct (N x 3) dimensionality.
-
-3. Clustering Segmentation: Confirms that the resulting clusters count is greater than one, achieving geometric separation.
-
-4. Clustering Regression: Asserts that the size of the largest segmented cluster remains stable against a known "Golden Standard" value (within 1% tolerance).
-
-5. Empty Input (Processor/Normal Estimation/Clustering): Verifies that passing an empty point cloud to them does not crash and returns zero points/clusters.
-
-The test suite performs three actions:
-
 1. Linting (Flake8): Checks all Python source files for PEP 8 style violations.
 
-2. Unit Tests: Verifies core functionality, such as ensuring Voxel Down-sampling correctly reduces the point count and clustering produces multiple segments.
+2. Downsampling Reduction: Verifies that Voxel Down-sampling successfully reduces the point count while remaining non-zero.
 
-3. Regression Test: Compares the size of the largest cluster against a known Golden Standard value to ensure stability against code changes.
+3. Normal Creation: Asserts that the NormalEstimator creates a normals array with the correct (N x 3) dimensionality.
+
+4. Clustering Segmentation: Confirms that the resulting clusters count is greater than one, achieving geometric separation.
+
+5. Clustering Regression: Asserts that the size of the largest segmented cluster remains stable against a known "Golden Standard" value (within 1% tolerance).
+
+6. Empty Input (Processor/Normal Estimation/Clustering): Verifies that passing an empty point cloud to them does not crash and returns zero points/clusters.
 
 ## Documentation
 
