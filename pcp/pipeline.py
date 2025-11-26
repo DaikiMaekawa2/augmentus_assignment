@@ -5,6 +5,7 @@ This module contains the core classes required for loading, preprocessing,
 analyzing, and visualizing 3D point cloud data using the Open3D library.
 """
 
+from typing import Tuple, List
 import numpy as np
 import open3d as o3d
 
@@ -114,7 +115,7 @@ class ClusterExtractor:
         eps: float = 0.05,
         min_points: int = 10,
         min_size: int = 500,
-    ):
+    ) -> Tuple[o3d.geometry.PointCloud, List[o3d.geometry.PointCloud], int] :
         """
         Performs Euclidean clustering (DBSCAN) on the point cloud.
 
