@@ -1,5 +1,19 @@
 # augmentus_assignment
 
+## Overview
+
+The pipeline processes the open3d.data.EaglePointCloud() dataset through the following stages:
+
+1. Loading: Data retrieval and format conversion.
+
+2. Preprocessing: Voxel Down-sampling for optimization.
+
+3. Analysis: Surface Normal Estimation.
+
+4. Segmentation: Euclidean Clustering (DBSCAN) to separate geometric components.
+
+The detailed OOP structure, method dependencies, and execution flow are documented in the dedicated architecture file:
+
 [UML Diagram](docs/pcp_pipeline.md)
 
 ## Installation and Setup
