@@ -242,8 +242,6 @@ class PointCloudPipeline:
         # 1. Down-sampling
 
         pcd_downsampled = self.processor.downsample(pcd, self.voxel_size)
-        self.save_render(pcd_downsampled, "render_downsampled.png")
-        print("render_downsampled.png saved.")
         o3d.visualization.draw_geometries([pcd_downsampled], window_name="Downsampled")
 
         # 2. Normal Estimation
@@ -253,8 +251,6 @@ class PointCloudPipeline:
         pcd_normals = self.normal_estimator.estimate_normals(
             pcd_downsampled, radius=search_radius
         )
-        self.save_render(pcd_normals, "render_normals.png")
-        print("render_normals.png saved.")
         o3d.visualization.draw_geometries(
             [pcd_normals], point_show_normal=True, window_name="Normals"
         )
@@ -266,5 +262,4 @@ class PointCloudPipeline:
             self.cluster_min_points,
             self.cluster_min_size,
         )
-        self.save_render(pcd_clustered, "render_clustered.png")
         o3d.visualization.draw_geometries([pcd_clustered], window_name="Clustered")

@@ -1,6 +1,6 @@
 # augmentus_assignment
 
-[UML Class Diagram](docs/pcp_pipeline.md)
+[UML Diagram](docs/pcp_pipeline.md)
 
 ## Installation and Setup
 
@@ -30,12 +30,6 @@ The core workflow is executed via the run_eagle_pipeline.py script.
 ```bash
 (venv_open3d) python pcp/run_eagle_pipeline.py
 ```
-
-#### Output Files Generated:
-
-* render_downsampled.png
-* render_normals.png
-* render_clustered.png
 
 ## Testing and Code Quality
 
