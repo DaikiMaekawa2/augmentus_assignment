@@ -63,7 +63,7 @@ sequenceDiagram
 
 # UML Class Diagram for Pytest Architecture
 
-* `Fixture (loaded_pcd)`: Acts as the setup/teardown utility for the entire test class.
+* `Fixture (loaded_raw_pcd, empty_pcd)`: Acts as the setup/teardown utility for testing.
 * `TestPointCloudProcessing`: The main container for all unit and regression test methods.
 
 ```mermaid
