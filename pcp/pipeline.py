@@ -230,7 +230,7 @@ class PointCloudPipeline:
         self.cluster_min_points = cluster_min_points
         self.cluster_min_size = cluster_min_size
 
-    def run_pipeline(self, pcd: o3d.geometry.PointCloud):
+    def run_pipeline(self, pcd: o3d.geometry.PointCloud) -> None:
         """
         Executes the full point cloud processing sequentially.
 

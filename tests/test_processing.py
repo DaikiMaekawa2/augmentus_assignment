@@ -7,17 +7,13 @@ pure Pytest style with fixtures for class-level setup.
 """
 
 import copy
+
 import numpy as np
 import open3d as o3d
 import pytest
 
-from pcp.pipeline import (
-    ClusterExtractor,
-    NormalEstimator,
-    PointCloudLoader,
-    PointCloudProcessor,
-)
-
+from pcp.pipeline import (ClusterExtractor, NormalEstimator, PointCloudLoader,
+                          PointCloudProcessor)
 
 # ----------------------------------------------------------------------
 # PYTEST FIXTURES
