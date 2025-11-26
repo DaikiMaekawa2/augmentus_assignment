@@ -28,7 +28,7 @@ The core workflow is executed via the run_eagle_pipeline.py script.
 ### Run the main pipeline script from the project root
 
 ```bash
-(venv_open3d) python pcp/run_eagle_pipeline.py
+(venv_open3d) python -m pcp.run_eagle_pipeline
 ```
 
 ## Testing and Code Quality
@@ -61,3 +61,21 @@ The test suite performs three actions:
 2. Unit Tests: Verifies core functionality, such as ensuring Voxel Down-sampling correctly reduces the point count and clustering produces multiple segments.
 
 3. Regression Test: Compares the size of the largest cluster against a known Golden Standard value to ensure stability against code changes.
+
+## Documentation
+
+The project's API reference are generated automatically from docstrings using Sphinx.
+
+1. Navigate to the documentation directory:
+
+```bash
+(venv_open3d) cd docs
+```
+
+2. Build the HTML documentation:
+
+```bash
+(venv_open3d) make html
+```
+
+Open _build/html/index.html in your web browser. This includes the API reference for all classes.

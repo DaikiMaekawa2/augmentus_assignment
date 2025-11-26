@@ -8,7 +8,7 @@ PointCloudPipeline found in the 'pcp' package.
 
 import numpy as np
 import open3d as o3d
-from pipeline import PointCloudPipeline, PointCloudLoader
+from pcp.pipeline import PointCloudPipeline, PointCloudLoader
 
 
 def load_and_transform_eagle_data() -> o3d.geometry.PointCloud:
