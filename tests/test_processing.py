@@ -6,6 +6,8 @@ downsampling, clustering segmentation, and output stability. This file uses the
 pure Pytest style with fixtures for class-level setup.
 """
 
+import copy
+import open3d as o3d
 import pytest
 
 from pcp.pipeline import (
@@ -22,12 +24,12 @@ from pcp.pipeline import (
 
 
 @pytest.fixture(scope="class")
-def loaded_pcd():
+def loaded_raw_pcd():
     """
     Class-scoped fixture to load the Eagle Point Cloud once per test class.
 
     This ensures the expensive data loading operation is only performed once
-    and the loaded data (pcd) is available to all test methods.
+    and the loaded raw data (pcd) is available to all test methods.
     """
     print("\n[Pytest Fixture] Loading Eagle Point Cloud...")
     pcd = PointCloudLoader().load_eagle_cloud()
@@ -39,6 +41,14 @@ def loaded_pcd():
     print("\n[Pytest Fixture] Clean up complete.")
 
 
+@pytest.fixture(scope="function")
+def empty_pcd():
+    """Returns a valid Open3D PointCloud object with zero points."""
+    pcd = o3d.geometry.PointCloud()
+    assert len(pcd.points) == 0
+    return pcd
+
+
 # ----------------------------------------------------------------------
 # PYTEST TEST CLASS
 # ----------------------------------------------------------------------
@@ -48,19 +58,54 @@ class TestPointCloudProcessing:
     """
     Tests the core functionality of the point cloud pipeline components.
 
-    Test methods receive the loaded point cloud data via the 'loaded_pcd' fixture.
+    Test methods receive the loaded point cloud data via the 'loaded_raw_pcd' and 'empty_pcd' fixture.
     """
 
     # Define the shared constants for regression testing
     GOLDEN_LARGEST_CLUSTER_SIZE = 251450
     TOLERANCE_PERCENTAGE = 0.01
 
-    def test_voxel_down_sampling_reduces_count(self, loaded_pcd):
+    def test_down_sample_empty_input(self, empty_pcd):
+        """
+        Validates that downsampling an empty point cloud returns an empty point cloud
+        and does not crash.
+        """
+        processor = PointCloudProcessor()
+
+        pcd_downsampled = processor.downsample(empty_pcd, voxel_size=0.01)
+
+        # Assert the result is still empty and valid
+        assert isinstance(pcd_downsampled, o3d.geometry.PointCloud)
+        assert len(pcd_downsampled.points) == 0
+        assert len(pcd_downsampled.normals) == 0  # Should not create normals if empty
+
+    def test_clustering_empty_input(self, empty_pcd):
+        """
+        Validates that clustering an empty point cloud returns zero clusters
+        and does not crash.
+        """
+        extractor = ClusterExtractor()
+
+        # Note: Clustering might fail if the object is missing normals,
+        # so we ensure it doesn't crash on an empty set of points.
+        pcd_clustered, clusters_list, count = extractor.euclidean_cluster(
+            empty_pcd, eps=0.040, min_points=35
+        )
+
+        # Assert the result is empty and count is zero
+        assert isinstance(pcd_clustered, o3d.geometry.PointCloud)
+        assert len(pcd_clustered.points) == 0
+        assert count == 0
+        assert len(clusters_list) == 0
+
+    def test_voxel_down_sampling_reduces_count(self, loaded_raw_pcd):
         """
         Validates the Voxel Down-sampling process.
 
         Asserts that the point count is strictly reduced while remaining non-zero.
         """
+        loaded_pcd = copy.deepcopy(loaded_raw_pcd)
+
         processor = PointCloudProcessor()
         initial_count = len(loaded_pcd.points)
 
@@ -73,10 +118,12 @@ class TestPointCloudProcessing:
         ), "Downsampling did not reduce the point count."
         assert downsampled_count > 0, "Downsampling resulted in an empty point cloud."
 
-    def test_clustering_produces_multiple_segments(self, loaded_pcd):
+    def test_clustering_produces_multiple_segments(self, loaded_raw_pcd):
         """
         Verifies that clustering successfully segments the scene into multiple components (> 1 cluster).
         """
+        loaded_pcd = copy.deepcopy(loaded_raw_pcd)
+
         processor = PointCloudProcessor()
         pcd_downsampled = processor.downsample(loaded_pcd, voxel_size=0.01)
         extractor = ClusterExtractor()
@@ -95,11 +142,12 @@ class TestPointCloudProcessing:
 
         assert count > 1, f"Clustering only produced {count} or fewer segments."
 
-    def test_clustering_regression(self, loaded_pcd):
+    def test_clustering_regression(self, loaded_raw_pcd):
         """
         Regression test: Asserts that the size of the largest cluster remains stable
         (within the defined tolerance) against a known Golden Standard.
         """
+        loaded_pcd = copy.deepcopy(loaded_raw_pcd)
 
         processor = PointCloudProcessor()
         normal_estimator = NormalEstimator()

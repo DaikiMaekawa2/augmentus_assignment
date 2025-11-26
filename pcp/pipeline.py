@@ -146,6 +146,10 @@ class ClusterExtractor:
         """Performs Euclidean clustering on the point cloud."""
         print(f"Performing clustering (eps={eps}, min_points={min_points})...")
 
+        if not pcd.points:
+            # Return immediately with 0 clusters and empty lists
+            return pcd, [], 0
+
         with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Error):
             labels = np.array(
                 pcd.cluster_dbscan(eps=eps, min_points=min_points, print_progress=True)
