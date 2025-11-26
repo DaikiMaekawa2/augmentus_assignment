@@ -1,0 +1,8 @@
+numpy==2.3.5
+open3d==0.19.0
+pytest==9.0.1
+pytest-flake8
+black
+isort
+sphinx
+sphinx-rtd-theme

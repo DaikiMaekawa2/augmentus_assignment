@@ -18,7 +18,7 @@ $ source venv_open3d/bin/activate
 2. Install Dependencies:
 
 ```bash
-(venv_open3d) pip install open3d numpy pytest pytest-flake8 black isort sphinx sphinx-rtd-theme sphinx-mermaid
+(venv_open3d) pip install -r requirements.txt
 ```
 
 ## Usage
